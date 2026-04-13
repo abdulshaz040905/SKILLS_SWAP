@@ -1,6 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const verifyToken = require("../middleware/verifyToken");
+
 
 const router = express.Router();
 
@@ -38,7 +41,6 @@ router.post("/register", async (req, res) => {
 });
 
 // LOGIN API
-const jwt = require("jsonwebtoken");
 
 router.post("/login", async (req, res) => {
   try {
@@ -82,4 +84,16 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// GET CURRENT LOGGED-IN USER
+router.get("/me", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message
+    });
+  }
+});
 module.exports = router;
