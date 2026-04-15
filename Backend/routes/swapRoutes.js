@@ -80,4 +80,48 @@ router.get("/my-requests", verifyToken, async (req, res) => {
   }
 });
 
+// ACCEPT / REJECT SWAP REQUEST
+router.patch("/:requestId", verifyToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const requestId = req.params.requestId;
+
+    // Validate status
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status"
+      });
+    }
+
+    const swapRequest = await SwapRequest.findById(requestId);
+
+    if (!swapRequest) {
+      return res.status(404).json({
+        message: "Request not found"
+      });
+    }
+
+    // Only receiver can accept/reject
+    if (swapRequest.receiver.toString() !== req.user.userId) {
+      return res.status(403).json({
+        message: "Unauthorized action"
+      });
+    }
+
+    swapRequest.status = status;
+    await swapRequest.save();
+
+    res.status(200).json({
+      message: `Request ${status} successfully`,
+      swapRequest
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
