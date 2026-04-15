@@ -7,7 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const swapRoutes = require("./routes/swapRoutes");
 const chatRoutes = require("./routes/chatRoutes");
-
+const Message = require("./models/Message");
 
 const app = express();
 
@@ -22,9 +22,10 @@ app.get("/", (req, res) => {
   res.send("SkillSwap API is running...");
 });
 
-mongoose.connect("mongodb://127.0.0.1:27017/skillswap")
+mongoose
+  .connect("mongodb://127.0.0.1:27017/skillswap")
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch((err) => console.log(err));
 
 const PORT = 5000;
 const http = require("http");
@@ -33,8 +34,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*"
-  }
+    origin: "*",
+  },
 });
 
 io.on("connection", (socket) => {
@@ -46,13 +47,26 @@ io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} joined room ${roomId}`);
   });
 
-  // Send message
-  socket.on("sendMessage", ({ roomId, message, sender }) => {
-    io.to(roomId).emit("receiveMessage", {
-      sender,
-      message,
-      createdAt: new Date()
-    });
+  socket.on("sendMessage", async ({ roomId, message, sender }) => {
+    try {
+      // Save message to DB
+      const savedMessage = await Message.create({
+        roomId,
+        sender,
+        message,
+      });
+
+      // Emit to all users in room
+      io.to(roomId).emit("receiveMessage", {
+        _id: savedMessage._id,
+        roomId: savedMessage.roomId,
+        sender: savedMessage.sender,
+        message: savedMessage.message,
+        createdAt: savedMessage.createdAt,
+      });
+    } catch (error) {
+      console.log("Message Save Error:", error.message);
+    }
   });
 
   socket.on("disconnect", () => {
