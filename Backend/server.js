@@ -40,35 +40,35 @@ const io = new Server(server, {
   },
 });
 
+
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
-  // Join chat room
+  // Join room (same as chat)
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
   });
 
-  socket.on("sendMessage", async ({ roomId, message, sender }) => {
-    try {
-      // Save message to DB
-      const savedMessage = await Message.create({
-        roomId,
-        sender,
-        message,
-      });
+  // WebRTC: Offer
+  socket.on("callUser", ({ roomId, offer, sender }) => {
+    socket.to(roomId).emit("incomingCall", {
+      offer,
+      sender
+    });
+  });
 
-      // Emit to all users in room
-      io.to(roomId).emit("receiveMessage", {
-        _id: savedMessage._id,
-        roomId: savedMessage.roomId,
-        sender: savedMessage.sender,
-        message: savedMessage.message,
-        createdAt: savedMessage.createdAt,
-      });
-    } catch (error) {
-      console.log("Message Save Error:", error.message);
-    }
+  // WebRTC: Answer
+  socket.on("answerCall", ({ roomId, answer }) => {
+    socket.to(roomId).emit("callAccepted", {
+      answer
+    });
+  });
+
+  // WebRTC: ICE candidates
+  socket.on("iceCandidate", ({ roomId, candidate }) => {
+    socket.to(roomId).emit("iceCandidate", {
+      candidate
+    });
   });
 
   socket.on("disconnect", () => {
