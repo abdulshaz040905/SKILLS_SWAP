@@ -4,6 +4,8 @@ const express = require("express");
 const verifyToken = require("../middleware/verifyToken");
 const SwapRequest = require("../models/SwapRequest");
 const Message = require("../models/Message");
+const verifyPremium = require("../middleware/verifyPremium");
+
 
 
 const router = express.Router();
@@ -60,7 +62,6 @@ router.get("/history/:roomId", verifyToken, async (req, res) => {
   }
 });
 
-const verifyPremium = require("../middleware/verifyPremium");
 
 // VIDEO CALL ACCESS
 router.get(

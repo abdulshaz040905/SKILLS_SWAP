@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Requests from "./pages/Requests";
 import Matches from "./pages/Matches";
+import Chat from "./pages/Chat";
 
 function App() {
   return (
@@ -38,6 +39,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Matches />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chat/:otherUserId"
+          element={
+            <ProtectedRoute>
+              <Chat />
             </ProtectedRoute>
           }
         />

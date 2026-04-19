@@ -21,9 +21,11 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await API.post("/auth/login", form);
-
+      console.log(res);
+      
       // Save token
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.user_id);
 
       // Redirect to dashboard
       navigate("/dashboard");

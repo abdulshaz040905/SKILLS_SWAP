@@ -40,7 +40,6 @@ const io = new Server(server, {
   },
 });
 
-
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
@@ -53,22 +52,40 @@ io.on("connection", (socket) => {
   socket.on("callUser", ({ roomId, offer, sender }) => {
     socket.to(roomId).emit("incomingCall", {
       offer,
-      sender
+      sender,
     });
   });
 
   // WebRTC: Answer
   socket.on("answerCall", ({ roomId, answer }) => {
     socket.to(roomId).emit("callAccepted", {
-      answer
+      answer,
     });
   });
 
   // WebRTC: ICE candidates
   socket.on("iceCandidate", ({ roomId, candidate }) => {
     socket.to(roomId).emit("iceCandidate", {
-      candidate
+      candidate,
     });
+  });
+
+  socket.on("sendMessage", async (data) => {
+    try {
+      console.log("Message received:", data);
+
+      const savedMessage = await Message.create({
+        roomId: data.roomId,
+        sender: data.sender,
+        message: data.message,
+      });
+
+      console.log("Emitting to room:", data.roomId);
+
+      io.to(data.roomId).emit("receiveMessage", savedMessage);
+    } catch (error) {
+      console.log("Error saving message:", error);
+    }
   });
 
   socket.on("disconnect", () => {
